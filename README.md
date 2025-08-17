@@ -165,4 +165,3 @@ Run in the project folder:
 docker-compose up
 ```
 
-If you need access to the private GitHub repository, please get in touch.
