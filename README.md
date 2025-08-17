@@ -1,62 +1,65 @@
-Application Programming Interface
-Definitions
-Flag - A bit indicating the resource that should be used for
-the computations.
-Project Purpose
-The purpose of this project is to create a system which enables the
-update, storage and retrieval of the Flag .
-Project Stack
-Python 3
-FastAPI
-Docker
-Redis
-Abstract
-A simple API to bridge the HoloLight application with our
-Reinforcement Learning system. The artefact from this project will
-be used to poll our decision.
-Access
-This system would be hosted on localhost on an available free
-port . Therefore the system requesting resources should allow for
-input of an port and or IP address when connecting to this API.
-Endpoints
-VAL: [Int] = Placeholder for value stored in system
-/get-flag
-Auto
-TYPE: GET
-RESPONSE: JSON = { "renderOnPC": VAL }
-/update-flag
-Auto
-TYPE: POST
-PARAMETERS:
+# API for Render Flag Management
+
+## 📌 Project Purpose
+The purpose of this project is to create a system which enables the update, storage, and retrieval of the **Flag** (a bit indicating the resource that should be used for computations).
+
+## 🛠️ Project Stack
+- Python 3  
+- FastAPI  
+- Docker  
+- Redis  
+
+## 📖 Abstract
+A simple API to bridge the **HoloLight application** with our **Reinforcement Learning system**.  
+The artefact from this project will be used to poll our decision.
+
+## 🌐 Access
+This system will be hosted on `localhost` on an available free port.  
+The system requesting resources should allow for input of a port and/or IP address when connecting to this API.
+
+---
+
+## 📍 Endpoints
+
+### `GET /get-flag`
+**Response (JSON):**
+```json
+{ "renderOnPC": VAL }
+
 curl -X POST -d '{"renderOnPC": VAL }' \
 -H 'Content-Type: application/json' \
 localhost:port
-Plain Text
-RESPONSE: JSON = {"renderOnPc": VAL}
-Source
-p oll.py
+
+{ "renderOnPC": VAL }
+
 import os
 import redis
 from fastapi import FastAPI
 from pydantic import BaseModel
-class RenderInfo(BaseModel): renderOnPC: int
+
+class RenderInfo(BaseModel):
+    renderOnPC: int
+
 app = FastAPI()
+
 conn = redis.Redis(
-host=os.getenv("REDIS_HOST", "localhost"),
-port=int(os.getenv("REDIS_PORT", 6379)),
-decode_responses = True
+    host=os.getenv("REDIS_HOST", "localhost"),
+    port=int(os.getenv("REDIS_PORT", 6379)),
+    decode_responses=True
 )
+
 @app.get("/get-flag")
 def get_flag():
-if not conn.exists("renderOnPC"): return {"render‐
-OnPC": -1}
-return {"renderOnPC": conn.get('renderOnPC')}
+    if not conn.exists("renderOnPC"):
+        return {"renderOnPC": -1}
+    return {"renderOnPC": conn.get("renderOnPC")}
+
 @app.post("/update-flag")
 def update_flag(info: RenderInfo):
-conn.set("renderOnPC", info.renderOnPC)
-return {"renderOnPC": conn.get('renderOnPC')}
-Python
-requirements.txt
+    conn.set("renderOnPC", info.renderOnPC)
+    return {"renderOnPC": conn.get("renderOnPC")}
+
+
 annotated-types==0.7.0
 anyio==4.8.0
 async-timeout==5.0.1
@@ -94,45 +97,4 @@ uvicorn==0.34.0
 uvloop==0.21.0
 watchfiles==1.0.4
 websockets==14.2
-Plain Text
 
-Dockerfile
-FROM python:3.10-slim
-WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-COPY poll.py ./
-EXPOSE 8000
-CMD ["uvicorn", "poll:app", "--host", "0.0.0.0", "--
-port", "8098"]
-Auto
-compose.yaml
-services:
-app:
-build:
-context: .
-container_name: my-app
-ports:
-- "0.0.0.0:8098:8098"
-environment:
-- REDIS_HOST=redis
-- REDIS_PORT=6379
-depends_on:
-- redis
-redis:
-image: redis:alpine
-container_name: redis
-ports:
-- "0.0.0.0:6379:6379"
-Auto
-.dockerignore
-venv/
-__pycache__/
-*.pyc
-*.pyo
-Auto
-Launch Instructions
-Run within the folder:
-docker-compose up
-If you would like to request access to the GitHub repository, please
-let me know!
