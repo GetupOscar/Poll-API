@@ -1,21 +1,19 @@
 # API for Render Flag Management
 
 ## 📌 Project Purpose
-The purpose of this project is to create a system which enables the update, storage, and retrieval of the **Flag** (a bit indicating the resource that should be used for computations).
+Create a system that enables the update, storage, and retrieval of a **Flag**—a bit indicating which resource should be used for computations.
 
-## 🛠️ Project Stack
+## 🛠️ Tech Stack
 - Python 3  
 - FastAPI  
 - Docker  
 - Redis  
 
 ## 📖 Abstract
-A simple API to bridge the **HoloLight application** with our **Reinforcement Learning system**.  
-The artefact from this project will be used to poll our decision.
+A simple API bridging the **HoloLight** application and a **Reinforcement Learning** system. The service is polled to obtain the rendering decision.
 
 ## 🌐 Access
-This system will be hosted on `localhost` on an available free port.  
-The system requesting resources should allow for input of a port and/or IP address when connecting to this API.
+The service runs on `localhost` at an available port. Clients should support configuring the API **IP/port**.
 
 ---
 
@@ -25,13 +23,24 @@ The system requesting resources should allow for input of a port and/or IP addre
 **Response (JSON):**
 ```json
 { "renderOnPC": VAL }
+```
 
+### `POST /update-flag`
+**Request (cURL):**
+```bash
 curl -X POST -d '{"renderOnPC": VAL }' \
--H 'Content-Type: application/json' \
-localhost:port
-
+  -H 'Content-Type: application/json' \
+  http://localhost:8098/update-flag
+```
+**Response (JSON):**
+```json
 { "renderOnPC": VAL }
+```
 
+---
+
+## 📂 Source Code (`poll.py`)
+```python
 import os
 import redis
 from fastapi import FastAPI
@@ -58,8 +67,12 @@ def get_flag():
 def update_flag(info: RenderInfo):
     conn.set("renderOnPC", info.renderOnPC)
     return {"renderOnPC": conn.get("renderOnPC")}
+```
 
+---
 
+## 📦 Requirements (`requirements.txt`)
+```
 annotated-types==0.7.0
 anyio==4.8.0
 async-timeout==5.0.1
@@ -97,4 +110,59 @@ uvicorn==0.34.0
 uvloop==0.21.0
 watchfiles==1.0.4
 websockets==14.2
+```
 
+---
+
+## 🐳 Docker
+
+### `Dockerfile`
+```dockerfile
+FROM python:3.10-slim
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY poll.py ./
+EXPOSE 8098
+CMD ["uvicorn", "poll:app", "--host", "0.0.0.0", "--port", "8098"]
+```
+
+### `docker-compose.yaml`
+```yaml
+services:
+  app:
+    build:
+      context: .
+    container_name: my-app
+    ports:
+      - "0.0.0.0:8098:8098"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "0.0.0.0:6379:6379"
+```
+
+### `.dockerignore`
+```
+venv/
+__pycache__/
+*.pyc
+*.pyo
+```
+
+---
+
+## 🚀 Launch Instructions
+Run in the project folder:
+```bash
+docker-compose up
+```
+
+If you need access to the private GitHub repository, please get in touch.
