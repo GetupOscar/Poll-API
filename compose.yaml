@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: . 
+    container_name: my-app
+    ports:
+      - "0.0.0.0:8098:8098"
+    environment:
+      - REDIS_HOST=redis  
+      - REDIS_PORT=6379  
+    depends_on:
+      - redis 
+
+  redis:
+    image: redis:alpine  
+    container_name: redis
+    ports:
+      - "0.0.0.0:6379:6379"  
